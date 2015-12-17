@@ -15,5 +15,10 @@
     "https://*/*",
     "storage",
     "geolocation"
-  ]
+  ],
+  "applications": {
+    "gecko": {
+      "id": "firefoxaddon@oabutton.org"
+    }
+  }
 }
