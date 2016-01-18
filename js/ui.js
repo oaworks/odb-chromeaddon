@@ -1,3 +1,6 @@
+// fixme: there are the URLs still valid for the Open Data Button?
+// fixme: what information is relevant for repositories / collections? (to replace metadata)
+
 var current_page = location.pathname;
 var key = localStorage.getItem('api_key');
 

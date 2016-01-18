@@ -1,4 +1,4 @@
-oab-chromeaddon
+odb-chromeaddon
 ===============
 
-Open Access Button Chrome Extension
+Open Data Button Chrome Extension

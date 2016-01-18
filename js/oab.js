@@ -1,4 +1,4 @@
-var serviceaddress = 'https://openaccessbutton.org';
+var serviceaddress = 'https://data.openaccessbutton.org';
 var apiaddress = serviceaddress + '/api';
 
 var oab = {
