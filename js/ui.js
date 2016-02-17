@@ -60,13 +60,19 @@ function store_article_info(title, doi, author, journal) {
     localStorage.setItem('journal', journal);
 }
 
+function prefill_email_fields(article_title, author_email) {
+
+}
+
 function handle_data(data) {
     var api_div = get_id('api_content');
     var blocked = data.blocked;
     var wishlist = data.wishlist;
 
-    if (data.hasOwnProperty('contentmine') && data.contentmine.hasOwnProperty('errors')) {
-        // Try to scrape DC.
+    if (data.hasOwnProperty('provided')) {
+        // show url
+    } else if (data.hasOwnProperty('request')) {
+        // submit user story and redirect to request URL
         chrome.runtime.onMessage.addListener(
             function (request, sender, sendResponse) {
                 var doc = (new DOMParser()).parseFromString(request.content, "text/html");
@@ -104,21 +110,8 @@ function handle_data(data) {
         }, function () {
             console.log('done');
         });
-
     } else {
-        var core_text;
-        if (data.hasOwnProperty('core') && data.core.hasOwnProperty('url')) {
-            core_text = '<a target="_blank" href="' + data.core.url + '">' + data.core.title + '</a>';
-        } else {
-            core_text = 'No results available';
-        }
-        if (data.hasOwnProperty('contentmine') && data.contentmine.hasOwnProperty('metadata') && data.contentmine.metadata.hasOwnProperty('title')) {
-            api_div.innerHTML = '<h5>' + data.contentmine.metadata['title'] + '</h5><h5>Links</h5><p><a target="_blank" href="http://scholar.google.co.uk/scholar?hl=en&q=' + encodeURI(data.contentmine.metadata['title']) + '">Google Scholar</a></p><h5>Related papers</h5><p>' + core_text + '</p><h5>Additional info</h5><ul><li>Blocked:' + data.blocked + '</li>' + '<li>Wishlist: ' + data.wishlist + '</li></ul>';
-            display_metadata(data.contentmine.metadata);
-        } else {
-            api_div.innerHTML = '<h5>Links</h5><p>No results available.</p><h5>Related papers</h5><p>No results available.</p><h5>Additional info</h5><ul><li>Blocked: ' + data.blocked + '</li>' + '<li>Wishlist: ' + data.wishlist + '</li></ul>';
-            display_metadata({})
-        }
+        // submit user story with email and title fields
     }
 }
 
@@ -162,39 +155,14 @@ function post_block_event(blockid, callback) {
     });
 }
 
-function display_metadata(metadata) {
-    var start = '<h5>Meta Data</h5><div class="collapse">';
-    var end = '</p>';
-    var meta_div = get_id('meta-div');
-    var meta_content = '';
-    for (var key in metadata) {
-        if (metadata.hasOwnProperty(key)) {
-            meta_content += '<p><strong>' + key + '</strong>: ' + JSON.stringify(metadata[key]) + '</div>';
-        }
-    }
-    meta_div.innerHTML = start + meta_content + end;
-}
-
 function process_api_response(data, requestor) {
     if (requestor == 'accounts') {
         localStorage.setItem('api_key', data.api_key);
         localStorage.setItem('username', get_value('user_email'));
         window.location.href = 'login.html'
-    } else if (requestor == 'status') {
-        handle_data(data);
     } else if (requestor == 'blocked') {
         localStorage.setItem('blocked_id', data.id);
-
-        // Get URL Status
-        var status_request = '/status';
-        status_data = {
-            'api_key': key,
-            'url': localStorage.getItem('active_tab')
-        },
-            oab.api_request(status_request, status_data, 'status', process_api_response, handle_api_error);
-
-    } else if (requestor == 'wishlist') {
-        window.location.href = 'failure.html';
+        handle_data(data);
     }
 }
 
@@ -213,46 +181,37 @@ if (current_page == '/ui/login.html') {
         // Handle the register button.
         document.getElementById('signup').addEventListener('click', function () {
             var user_email = get_value('user_email');
-            var user_password = get_value('user_password');
             var user_name = get_value('user_name');
             var user_prof = get_value('user_prof');
             var privacy = get_id('privacy_c');
             var terms = get_id('terms_c');
 
-            if (user_email && user_password && user_name && user_prof && privacy.checked && terms.checked) {
+            if (user_email && user_name && user_prof && privacy.checked && terms.checked) {
                 var api_request = '/register';
                 data = {
                     'email': user_email,
-                    'password': user_password,
                     'username': user_name,
                     'profession': user_prof
                 };
                 oab.api_request(api_request, data, 'accounts', process_api_response, handle_api_error);
             } else {
-                display_error('You must supply an email address, password, username and profession to register. You must also agree to our privacy policy and terms by checking the boxes.');
+                display_error('You must supply an email address, username and profession to register. You must also agree to our privacy policy and terms by checking the boxes.');
             }
         });
 
         // Handle the login button.
         document.getElementById('login').addEventListener('click', function () {
             var user_email = get_value('user_email');
-            var user_password = get_value('user_password');
 
-            if (user_email && user_password) {
-                var api_request = '/retrieve';
+            if (user_email) {
+                var api_request = '/register';
                 data = {
                     'email': user_email,
-                    'password': user_password
                 };
                 oab.api_request(api_request, data, 'accounts', process_api_response, handle_api_error);
             } else {
                 display_error('error', 'You must supply an email address and a password to login or register.');
             }
-        });
-
-        // Handle forgot button
-        document.getElementById('forgot').addEventListener('click', function () {
-            window.open("http://openaccessbutton.org/chrome/forgot_password");
         });
     });
 
@@ -260,36 +219,21 @@ if (current_page == '/ui/login.html') {
     window.addEventListener('load', function () {
         document.getElementById('spin-greybox').style.visibility = 'hidden';
 
-        document.getElementById('meta-collapse').addEventListener('click', function () {
-            var $this = $(this);
-            var $collapse = $this.closest('.collapse-group').find('.collapse');
-            $collapse.collapse('toggle');
-        });
-
+        //$('#auth_email').collapse('show');
+        //$('#article_title').collapse('show');
+        /*
         document.getElementById('email_auth_check').addEventListener('change', function () {
             if (this.checked){
                 $('#auth_email').collapse('show')
             } else {
                 $('#auth_email').collapse('hide')
             }
-        });
+        });*/
 
-        document.getElementById('success').addEventListener('click', function () {
+        document.getElementById('submit').addEventListener('click', function () {
             document.getElementById('spin-greybox').style.visibility = 'visible';
             post_block_event(localStorage.getItem('blocked_id'), function () {
-                window.location.href = 'success.html';
-            });
-        });
-
-        document.getElementById('failure').addEventListener('click', function () {
-            document.getElementById('spin-greybox').style.visibility = 'visible';
-            post_block_event(localStorage.getItem('blocked_id'), function () {
-                var request = '/wishlist';
-                data = {
-                    'api_key': key,
-                    'url': localStorage.getItem('active_tab')
-                },
-                    oab.api_request(request, data, 'wishlist', process_api_response, handle_api_error);
+                window.close();
             });
         });
 
@@ -305,14 +249,6 @@ if (current_page == '/ui/login.html') {
                 'url': localStorage.getItem('active_tab')
             },
                 oab.api_request(blocked_request, status_data, 'blocked', process_api_response, handle_api_error);
-        } else {
-            // Get URL Status
-            var status_request = '/status';
-            status_data = {
-                'api_key': key,
-                'url': localStorage.getItem('active_tab')
-            },
-                oab.api_request(status_request, status_data, 'status', process_api_response, handle_api_error);
         }
 
         $('#story').keyup(function () {
@@ -321,7 +257,7 @@ if (current_page == '/ui/login.html') {
                 left = 0;
             }
             $('#counter').text(left);
-            var failure = get_id('failure');
+            var failure = get_id('success');
             if (left < 85) {
                 failure.disabled = false;
             } else {
@@ -330,28 +266,6 @@ if (current_page == '/ui/login.html') {
         });
     });
 
-} else if (current_page == '/ui/success.html' && key) {
-    var link = serviceaddress + '/story/' + localStorage.getItem('blocked_id');
-    document.getElementById('fb').addEventListener('click', function () {
-        chrome.tabs.create({'url': "https://www.facebook.com/sharer/sharer.php?u=" + link});
-    });
-    document.getElementById('tw').addEventListener('click', function () {
-        chrome.tabs.create({'url': "https://twitter.com/intent/tweet?text=See%20what%20I%E2%80%99d%20do%20with%20access%20to%20this%20research%20paper%20at%20" + link + "%20via%20%40oa_button.&source=webclient"});
-    });
-    document.getElementById('gp').addEventListener('click', function () {
-        chrome.tabs.create({'url': "https://plus.google.com/share?url=" + link});
-    });
-} else if (current_page == '/ui/failure.html' && key) {
-    var link = serviceaddress + '/story/' + localStorage.getItem('blocked_id');
-    document.getElementById('fb').addEventListener('click', function () {
-        chrome.tabs.create({'url': "https://www.facebook.com/sharer/sharer.php?u=" + link});
-    });
-    document.getElementById('tw').addEventListener('click', function () {
-        chrome.tabs.create({'url': "https://twitter.com/intent/tweet?text=See%20what%20I%E2%80%99d%20do%20with%20access%20to%20this%20research%20paper%20at%20" + link + "%20via%20%40oa_button.&source=webclient"});
-    });
-    document.getElementById('gp').addEventListener('click', function () {
-        chrome.tabs.create({'url': "https://plus.google.com/share?url=" + link});
-    });
 } else {
     window.location.href = 'login.html';
 }

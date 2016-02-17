@@ -1,5 +1,5 @@
-var serviceaddress = 'https://data.openaccessbutton.org';
-var apiaddress = serviceaddress + '/api';
+var serviceaddress = 'http://api.cottagelabs.com/service';
+var apiaddress = serviceaddress + '/oabutton';
 
 var oab = {
     ///////////////////////////////////
