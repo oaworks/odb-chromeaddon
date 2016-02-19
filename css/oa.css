@@ -17,6 +17,11 @@ ul {
     font-size: 12px;
 }
 
+.anchored-bottom {
+    position:absolute;
+    bottom: 0;
+}
+
 .container {
     padding-right: 10px;
     padding-left: 10px;

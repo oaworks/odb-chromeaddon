@@ -50,7 +50,7 @@ function get_loc(callback) {
 
 function display_error(warning) {
     var warn_div = get_id('error');
-    warn_div.innerHTML = '<div class="alert alert-danger" role="alert">' + warning + '</div>';
+    warn_div.innerHTML = '<div class="alert alert-danger med-text" role="alert">' + warning + '</div>';
 }
 
 function store_article_info(title, doi, author, journal) {
@@ -159,16 +159,10 @@ function handle_data(data) {
     }
 }
 
-function handle_api_error(data) {
+function handle_api_error(data) {               // todo: check for more errors
     var error_text = '';
-    if (data.hasOwnProperty('responseJSON') && data.responseJSON.hasOwnProperty('errors')) {
-        if (data.responseJSON['errors'][0] == '401: Unauthorized') {
-            error_text = 'Failed with API key.';
-        } else if (data.responseJSON['errors'][0] == '404: Not Found') {
-            error_text = 'Email address does not have an account.';
-        } else if (data.responseJSON['errors'][0] == 'username already exists') {
-            error_text = 'Email address already associated with an account.';
-        }
+    if (data.status == 401) {
+        error_text = "Unauthorised - check your API key is valid."
     }
     if (error_text != '') {
         display_error(error_text);
@@ -201,9 +195,11 @@ function post_block_event(blockid, callback) {
 
 function process_api_response(data, requestor) {
     if (requestor == 'accounts') {
-        localStorage.setItem('api_key', data.api_key);
-        localStorage.setItem('username', get_value('user_email'));
-        window.location.href = 'login.html'
+        if (data.apikey) {
+            localStorage.setItem('api_key', data.apikey);
+            localStorage.setItem('username', get_value('user_email'));
+            window.location.href = 'login.html'
+        }
     } else if (requestor == 'blocked') {
         localStorage.setItem('blocked_id', data._id);
         handle_data(data);
@@ -220,6 +216,10 @@ if (current_page == '/ui/login.html') {
 
         document.getElementById('terms').addEventListener('click', function () {
             chrome.tabs.create({'url': "http:/openaccessbutton.org/terms"});
+        });
+
+        document.getElementById('acc').addEventListener('click', function () {
+            chrome.tabs.create({'url': "http:/openaccessbutton.org/account"});
         });
 
         // Handle the register button.
@@ -245,16 +245,19 @@ if (current_page == '/ui/login.html') {
 
         // Handle the login button.
         document.getElementById('login').addEventListener('click', function () {
-            var user_email = get_value('user_email');
+            var user_key = get_value('user_key');
 
-            if (user_email) {
-                var api_request = '/register';
+            if (user_key) {
+                var api_request = '/blocked';
                 data = {
-                    'email': user_email
+                    'api_key': user_key
                 };
-                oab.api_request(api_request, data, 'accounts', process_api_response, handle_api_error);
+                oab.api_request(api_request, data, 'accounts', function(){
+                    localStorage.setItem('api_key', user_key);
+                    window.location.href="login.html";
+                }, handle_api_error);
             } else {
-                display_error('error', 'You must supply an email address to login or register.');
+                display_error('You must supply an API key to authenticate.');
             }
         });
     });
