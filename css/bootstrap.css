@@ -39,6 +39,8 @@ body {
 .footer {
   margin-top: 10px;
   font-size: 12px;
+  position:absolute;
+  bottom: 0;
 }
 .large-text {
   font-size: 15px;

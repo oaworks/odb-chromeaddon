@@ -1,5 +1,4 @@
-var serviceaddress = 'http://api.cottagelabs.com/service';
-var apiaddress = serviceaddress + '/oabutton';
+var apiaddress = 'http://api.cottagelabs.com/service/oabutton';
 
 var oab = {
     ///////////////////////////////////
@@ -22,7 +21,7 @@ var oab = {
             'cache': false,
             'data': JSON.stringify(this.plugin_version_sign(data)),
             'success': function(data){
-                success_callback(data, requestor)
+                success_callback(data['data'], requestor)
             },
             'error': function(data){
                 failure_callback(data)
@@ -56,6 +55,17 @@ var oab = {
             if (metas[i].getAttribute("name") == "citation_author") {
                 var authname = metas[i].getAttribute("content");
                 authors.push( { name: authname } );
+            }
+        }
+        return authors;
+    },
+
+    return_author_email: function(metas) {
+        var authors = [];
+        for (i=0; i<metas.length; i++) {
+            if (metas[i].getAttribute("name") == "citation_author_email") {
+                var email = metas[i].getAttribute("content");
+                authors.push(email);
             }
         }
         return authors;

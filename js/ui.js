@@ -60,19 +60,70 @@ function store_article_info(title, doi, author, journal) {
     localStorage.setItem('journal', journal);
 }
 
-function prefill_email_fields(article_title, author_email) {
+function show_email_fields(author_email, article_title) {
+    // make fields appear
+    var em = $('#auth_email');
+    var ti = $('#article_title');
+    em.collapse('show');
+    ti.collapse('show');
 
+    // pre-fill them with supplied data if available
+    if (author_email) {
+        em.val(author_email);
+    }
+    if (article_title) {
+        ti.val(article_title);
+    }
+}
+
+function set_button(button_text, button_target, post_story) {
+    //fixme: this could be much more efficient!
+
+    var button = $('#submit');
+    button.text(button_text);
+
+    if (button_target && post_story) { // story and redirect, redirect after post made
+        button.click(function() {
+            document.getElementById('spin-greybox').style.visibility = 'visible';
+            post_block_event(localStorage.getItem('blocked_id'), function () {
+                chrome.tabs.create({url: button_target})
+            });
+        });
+    } else if (post_story) { // story only; we need to tell the popup to close once it is sent
+        button.click(function () {
+            document.getElementById('spin-greybox').style.visibility = 'visible';
+            post_block_event(localStorage.getItem('blocked_id'), function () {
+                var pp = chrome.extension.getViews({type: 'popup'})[0];
+                pp.close();
+            });
+        });
+    } else if (button_target) { // target only, just open tab when button is clicked
+        button.click(function() {
+            chrome.tabs.create({url: button_target})
+        });
+    }
 }
 
 function handle_data(data) {
     var api_div = get_id('api_content');
-    var blocked = data.blocked;
-    var wishlist = data.wishlist;
 
     if (data.hasOwnProperty('provided')) {
-        // show url
+        // we have found the data; send the user to its url
+        $('#story_div').collapse('hide');
+        get_id('submit').disabled = false;
+
+        api_div.innerHTML = '<h4 class="title">We found this data!</h4>';
+        set_button("See your data", data.provided.url, false);
     } else if (data.hasOwnProperty('request')) {
-        // submit user story and redirect to request URL
+        // submit user story and redirect to request URL (add story to existing request)
+        api_div.innerHTML = '<h5 class="title">We\'ve found an existing request. Add your story to support this request.</h5>';
+        set_button("Submit and view request", apiaddress + "/request/" + data.request, true);
+    } else {
+        // submit user story with email and title fields (create new request)
+        api_div.innerHTML = '<h4 class="title">This data isn\'t available.</h4><p>You can submit a request to the author.</p>';
+        set_button("Send a new request", undefined, true);
+
+        // Extract more metadata from the page to augment the blocked request FIXME: This is a strange way of doing it.
         chrome.runtime.onMessage.addListener(
             function (request, sender, sendResponse) {
                 var doc = (new DOMParser()).parseFromString(request.content, "text/html");
@@ -82,6 +133,7 @@ function handle_data(data) {
                 var author = oab.return_authors(meta);
                 var journal = oab.return_journal(meta);
                 store_article_info(title, doi, author, journal);
+                show_email_fields(undefined, title);                // fixme: we can't reliably scrape emails yet
 
                 var block_request = '/blocked/' + localStorage.getItem('blocked_id');
                 var data = {             // This is best-case (assume getting all info) for now.
@@ -95,12 +147,6 @@ function handle_data(data) {
                     }
                 };
                 oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
-
-                if (title) {
-                    api_div.innerHTML = '<h5 class="title-emph">' + title + '</h5><h5>Links</h5><p><a target="_blank" href="http://scholar.google.co.uk/scholar?hl=en&q=' + encodeURI(title) + '">Google Scholar</a></p><h5>Related papers</h5><p>No results available.</p><h5>Additional info</h5><ul><li>Blocked:' + blocked + '</li>' + '<li>Wishlist: ' + wishlist + '</li></ul>';
-                } else {
-                    api_div.innerHTML = '<div class="alert alert-danger" role="alert"><p><strong>Error</strong> Are you sure this is an article page?</p>';
-                }
             });
 
         var tab_id = parseInt(localStorage.getItem('tab_id'), 10);
@@ -110,8 +156,6 @@ function handle_data(data) {
         }, function () {
             console.log('done');
         });
-    } else {
-        // submit user story with email and title fields
     }
 }
 
@@ -119,7 +163,7 @@ function handle_api_error(data) {
     var error_text = '';
     if (data.hasOwnProperty('responseJSON') && data.responseJSON.hasOwnProperty('errors')) {
         if (data.responseJSON['errors'][0] == '401: Unauthorized') {
-            error_text = 'Incorrect password.';
+            error_text = 'Failed with API key.';
         } else if (data.responseJSON['errors'][0] == '404: Not Found') {
             error_text = 'Email address does not have an account.';
         } else if (data.responseJSON['errors'][0] == 'username already exists') {
@@ -161,7 +205,7 @@ function process_api_response(data, requestor) {
         localStorage.setItem('username', get_value('user_email'));
         window.location.href = 'login.html'
     } else if (requestor == 'blocked') {
-        localStorage.setItem('blocked_id', data.id);
+        localStorage.setItem('blocked_id', data._id);
         handle_data(data);
     }
 }
@@ -206,11 +250,11 @@ if (current_page == '/ui/login.html') {
             if (user_email) {
                 var api_request = '/register';
                 data = {
-                    'email': user_email,
+                    'email': user_email
                 };
                 oab.api_request(api_request, data, 'accounts', process_api_response, handle_api_error);
             } else {
-                display_error('error', 'You must supply an email address and a password to login or register.');
+                display_error('error', 'You must supply an email address to login or register.');
             }
         });
     });
@@ -219,23 +263,6 @@ if (current_page == '/ui/login.html') {
     window.addEventListener('load', function () {
         document.getElementById('spin-greybox').style.visibility = 'hidden';
 
-        //$('#auth_email').collapse('show');
-        //$('#article_title').collapse('show');
-        /*
-        document.getElementById('email_auth_check').addEventListener('change', function () {
-            if (this.checked){
-                $('#auth_email').collapse('show')
-            } else {
-                $('#auth_email').collapse('hide')
-            }
-        });*/
-
-        document.getElementById('submit').addEventListener('click', function () {
-            document.getElementById('spin-greybox').style.visibility = 'visible';
-            post_block_event(localStorage.getItem('blocked_id'), function () {
-                window.close();
-            });
-        });
 
         document.getElementById('why').addEventListener('click', function () {
             chrome.tabs.create({'url': "http://openaccessbutton.org/chrome/why"});
@@ -257,11 +284,11 @@ if (current_page == '/ui/login.html') {
                 left = 0;
             }
             $('#counter').text(left);
-            var failure = get_id('success');
+            var submit_btn = get_id('submit');
             if (left < 85) {
-                failure.disabled = false;
+                submit_btn.disabled = false;
             } else {
-                failure.disabled = true;
+                submit_btn.disabled = true;
             }
         });
     });
