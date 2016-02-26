@@ -1,12 +1,13 @@
 {
-  "name": "Open Access Button",
-  "version": "0.7",
+  "name": "Open Data Button",
+  "version": "0.8.1",
+  "version_name": "odb_chrome_0.8.1",
   "manifest_version": 2,
-  "description": "Push Button. Get Research. Make Progress.",
-  "icons": { "128": "img/oa128.png" },
+  "description": "Push Button. Get Data. Make Progress.",
+  "icons": { "128": "img/od128.png" },
   "browser_action": {
-    "default_title": "OA Button",
-    "default_icon": "img/oa128.png",
+    "default_title": "OD Button",
+    "default_icon": "img/od128.png",
     "default_popup": "ui/bootstrapper.html"
   },
   "permissions": [
