@@ -117,7 +117,7 @@ function handle_data(data) {
     } else if (data.hasOwnProperty('request')) {
         // submit user story and redirect to request URL (add story to existing request)
         api_div.innerHTML = '<h5 class="title">We\'ve found an existing request. Add your story to support this request.</h5>';
-        set_button("Submit and view request", apiaddress + "/request/" + data.request, true);
+        set_button("Submit and view request", siteaddress + "/request/" + data.request, true);
     } else {
         // submit user story with email and title fields (create new request)
         api_div.innerHTML = '<h4 class="title">This data isn\'t available.</h4><p>You can submit a request to the author.</p>';

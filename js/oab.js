@@ -1,4 +1,5 @@
 var apiaddress = 'https://api.opendatabutton.org';
+var siteaddress = "https://opendatabutton.org";
 
 var oab = {
     ///////////////////////////////////
