@@ -1,4 +1,4 @@
-var apiaddress = 'http://api.cottagelabs.com/service/oabutton';
+var apiaddress = 'https://api.opendatabutton.org';
 
 var oab = {
     ///////////////////////////////////
@@ -27,7 +27,7 @@ var oab = {
                 failure_callback(data)
             }
         });
-        console.log(request_type + JSON.stringify(data));
+        //console.log(request_type + JSON.stringify(data));
     },
 
     ///////////////////////////////////

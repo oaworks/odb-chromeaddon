@@ -152,9 +152,9 @@ function handle_data(data) {
         var tab_id = parseInt(localStorage.getItem('tab_id'), 10);
         // Now inject a script onto the page
         chrome.tabs.executeScript(tab_id, {
-            code: "chrome.runtime.sendMessage({content: document.head.innerHTML}, function(response) { console.log('success'); });"
+            code: "chrome.runtime.sendMessage({content: document.head.innerHTML}, function(response) { //console.log('success'); });"
         }, function () {
-            console.log('done');
+            //console.log('done');
         });
     }
 }
@@ -163,6 +163,8 @@ function handle_api_error(data) {               // todo: check for more errors
     var error_text = '';
     if (data.status == 401) {
         error_text = "Unauthorised - check your API key is valid."
+    } else if (data.status == 403) {
+        error_text = "Forbidden - account may already exist."
     }
     if (error_text != '') {
         display_error(error_text);
