@@ -1,6 +1,3 @@
-// fixme: there are the URLs still valid for the Open Data Button?
-// fixme: what information is relevant for repositories / collections? (to replace metadata)
-
 var current_page = location.pathname;
 var key = localStorage.getItem('api_key');
 
@@ -8,16 +5,6 @@ var key = localStorage.getItem('api_key');
 window.addEventListener('load', function () {
     document.getElementById('bug').addEventListener('click', function () {
         chrome.tabs.create({'url': "http:/openaccessbutton.org/chrome/bug"});
-    });
-    document.getElementById('help').addEventListener('click', function () {
-        chrome.tabs.create({'url': "http:/openaccessbutton.org/chrome/help"});
-    });
-    document.getElementById('privacy').addEventListener('click', function () {
-        if (current_page == '/ui/login.html') {
-            chrome.tabs.create({'url': "http://openaccessbutton.org/privacy"});
-        } else {
-            chrome.tabs.create({'url': "http://openaccessbutton.org/user/" + localStorage.getItem('username')});
-        }
     });
     document.getElementById('logout').addEventListener('click', function () {
         if ('api_key' in localStorage) localStorage.removeItem('api_key');
@@ -152,9 +139,9 @@ function handle_data(data) {
         var tab_id = parseInt(localStorage.getItem('tab_id'), 10);
         // Now inject a script onto the page
         chrome.tabs.executeScript(tab_id, {
-            code: "chrome.runtime.sendMessage({content: document.head.innerHTML}, function(response) { //console.log('success'); });"
+            code: "chrome.runtime.sendMessage({content: document.head.innerHTML}, function(response) { console.log('success'); });"
         }, function () {
-            //console.log('done');
+            console.log('done');
         });
     }
 }
@@ -270,7 +257,7 @@ if (current_page == '/ui/login.html') {
 
 
         document.getElementById('why').addEventListener('click', function () {
-            chrome.tabs.create({'url': "http://openaccessbutton.org/chrome/why"});
+            chrome.tabs.create({'url': "https://opendatabutton.org/why"});
         });
 
         if (!localStorage.getItem('blocked_id')) {
