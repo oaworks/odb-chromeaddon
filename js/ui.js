@@ -47,14 +47,17 @@ function store_article_info(title, doi, author, journal) {
     localStorage.setItem('journal', journal);
 }
 
-function show_email_fields(author_email, article_title) {
-    // make fields appear
+function hide_email_fields() {
     var em = $('#auth_email');
     var ti = $('#article_title');
-    em.collapse('show');
-    ti.collapse('show');
+    em.collapse('hide');
+    ti.collapse('hide');
+}
 
-    // pre-fill them with supplied data if available
+function fill_email_fields(author_email, article_title) {
+    var em = $('#auth_email');
+    var ti = $('#article_title');
+    // pre-fill the text fields with supplied data if available
     if (author_email) {
         em.val(author_email);
     }
@@ -78,11 +81,16 @@ function set_button(button_text, button_target, post_story) {
         });
     } else if (post_story) { // story only; we need to tell the popup to close once it is sent
         button.click(function () {
-            document.getElementById('spin-greybox').style.visibility = 'visible';
-            post_block_event(localStorage.getItem('blocked_id'), function () {
-                var pp = chrome.extension.getViews({type: 'popup'})[0];
-                pp.close();
-            });
+            // check we have an email before sending    //fixme: this should really be done by not activating the button
+            if (!get_value('auth_email') || !get_value('article_title')) {
+                display_error("Please complete all fields!")
+            } else {
+                document.getElementById('spin-greybox').style.visibility = 'visible';
+                post_block_event(localStorage.getItem('blocked_id'), function () {
+                    var pp = chrome.extension.getViews({type: 'popup'})[0];
+                    pp.close();
+                });
+            }
         });
     } else if (button_target) { // target only, just open tab when button is clicked
         button.click(function() {
@@ -96,6 +104,7 @@ function handle_data(data) {
 
     if (data.hasOwnProperty('provided')) {
         // we have found the data; send the user to its url
+        hide_email_fields();
         $('#story_div').collapse('hide');
         get_id('submit').disabled = false;
 
@@ -103,6 +112,7 @@ function handle_data(data) {
         set_button("See your data", data.provided.url, false);
     } else if (data.hasOwnProperty('request')) {
         // submit user story and redirect to request URL (add story to existing request)
+        hide_email_fields();
         api_div.innerHTML = '<h5 class="title">We\'ve found an existing request. Add your story to support this request.</h5>';
         set_button("Submit and view request", siteaddress + "/request/" + data.request, true);
     } else {
@@ -120,7 +130,7 @@ function handle_data(data) {
                 var author = oab.return_authors(meta);
                 var journal = oab.return_journal(meta);
                 store_article_info(title, doi, author, journal);
-                show_email_fields(undefined, title);                // fixme: we can't reliably scrape emails yet
+                fill_email_fields(undefined, title);                // fixme: we can't reliably scrape emails yet
 
                 var block_request = '/blocked/' + localStorage.getItem('blocked_id');
                 var data = {             // This is best-case (assume getting all info) for now.
@@ -169,7 +179,7 @@ function post_block_event(blockid, callback) {
     // Add author email if provided so oabutton can email them //todo: parse from page & populate field
     var given_auth_email = get_value('auth_email');
     if (given_auth_email) {
-        data['email'] = [given_auth_email]
+        data['email'] = [given_auth_email];
     }
 
     // Add location data to story if possible

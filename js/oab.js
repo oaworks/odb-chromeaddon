@@ -76,7 +76,7 @@ var oab = {
         for (i=0; i<metas.length; i++) {
             if (metas[i].getAttribute("name") == "citation_journal_title") {
                 var jtitle = metas[i].getAttribute("content");
-                return { journal: { name: jtitle } }
+                return { name: jtitle }
             }
         }
     },
