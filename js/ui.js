@@ -21,7 +21,7 @@ function get_value(id) {
 }
 function get_loc(callback) {
     if (navigator.geolocation) {
-        var opts = {timeout: 10000};        // 10 sec timeout
+        var opts = {timeout: 5000};        // 5 sec timeout
         navigator.geolocation.getCurrentPosition(function (position) {
             var lat_lon = {geo: {lat: position.coords.latitude, lon: position.coords.longitude}};
             callback(lat_lon)
@@ -217,8 +217,12 @@ if (current_page == '/ui/login.html') {
             chrome.tabs.create({'url': "http:/openaccessbutton.org/terms"});
         });
 
+        document.getElementById('privacy').addEventListener('click', function () {
+            chrome.tabs.create({'url': "http:/openaccessbutton.org/privacy"});
+        });
+
         document.getElementById('acc').addEventListener('click', function () {
-            chrome.tabs.create({'url': "http:/openaccessbutton.org/account"});
+            chrome.tabs.create({'url': "https:/opendatabutton.org/account"});
         });
 
         // Handle the register button.
