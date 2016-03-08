@@ -182,14 +182,21 @@ function post_block_event(blockid, callback) {
         data['email'] = [given_auth_email];
     }
 
-    // Add location data to story if possible
-    get_loc(function (pos_obj) {
-        if (pos_obj) {
-            data['location'] = pos_obj;
-        }
+    try {
+        // Add location data to story if possible
+        get_loc(function (pos_obj) {
+            if (pos_obj) {
+                data['location'] = pos_obj;
+            }
+            oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
+            callback()
+        });
+    } catch (e) {
+        console.log("A location error has occurred.");
         oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
         callback()
-    });
+    }
+
 }
 
 function process_api_response(data, requestor) {
