@@ -192,7 +192,9 @@ function post_block_event(blockid, callback) {
             callback()
         });
     } catch (e) {
-        console.log("A location error has occurred.")
+        console.log("A location error has occurred.");
+        oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
+        callback()
     }
 
 }
