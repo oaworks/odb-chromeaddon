@@ -21,7 +21,7 @@ function get_value(id) {
 }
 function get_loc(callback) {
     if (navigator.geolocation) {
-        var opts = {timeout: 10000};        // 10 sec timeout
+        var opts = {timeout: 5000};        // 5 sec timeout
         navigator.geolocation.getCurrentPosition(function (position) {
             var lat_lon = {geo: {lat: position.coords.latitude, lon: position.coords.longitude}};
             callback(lat_lon)
@@ -182,14 +182,19 @@ function post_block_event(blockid, callback) {
         data['email'] = [given_auth_email];
     }
 
-    // Add location data to story if possible
-    get_loc(function (pos_obj) {
-        if (pos_obj) {
-            data['location'] = pos_obj;
-        }
-        oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
-        callback()
-    });
+    try {
+        // Add location data to story if possible
+        get_loc(function (pos_obj) {
+            if (pos_obj) {
+                data['location'] = pos_obj;
+            }
+            oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
+            callback()
+        });
+    } catch (e) {
+        console.log("A location error has occurred.")
+    }
+
 }
 
 function process_api_response(data, requestor) {
@@ -217,8 +222,12 @@ if (current_page == '/ui/login.html') {
             chrome.tabs.create({'url': "http:/openaccessbutton.org/terms"});
         });
 
+        document.getElementById('privacy').addEventListener('click', function () {
+            chrome.tabs.create({'url': "http:/openaccessbutton.org/privacy"});
+        });
+
         document.getElementById('acc').addEventListener('click', function () {
-            chrome.tabs.create({'url': "http:/openaccessbutton.org/account"});
+            chrome.tabs.create({'url': "https:/opendatabutton.org/account"});
         });
 
         // Handle the register button.
