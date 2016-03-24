@@ -8,7 +8,13 @@ var oab = {
 
     // Tell the API which plugin version is in use for each POST
     plugin_version_sign: function(pdata) {
-        var manifest = chrome.runtime.getManifest();
+        var manifest;
+        try {
+            manifest = chrome.runtime.getManifest();
+        } catch (e) {
+            manifest = {version_name: "firefox_dev"}
+        }
+
         return $.extend(pdata, { plugin: manifest['version_name'] } );
     },
 
@@ -28,7 +34,7 @@ var oab = {
                 failure_callback(data)
             }
         });
-        //console.log(request_type + JSON.stringify(data));
+        console.log(request_type + JSON.stringify(data));
     },
 
     ///////////////////////////////////
