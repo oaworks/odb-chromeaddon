@@ -29,17 +29,7 @@ function get_loc(callback) {
         }, function (error) {
             // Can't get location (permission denied or timed out)
             console.log(error.message);
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    callback(null);
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    callback(null);
-                    break;
-                case error.TIMEOUT:     // Firefox was both succeeding and timing out, causing duplicate callbacks.
-                    break;
-
-            }
+            callback(null);
         }, opts);
     } else {
         // Browser does not support location
