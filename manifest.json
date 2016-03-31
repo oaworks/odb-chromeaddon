@@ -1,14 +1,14 @@
 {
   "name": "Open Data Button",
-  "version": "0.8.4",
-  "version_name": "odb_chrome_0.8.4",
+  "version": "0.8.5",
+  "version_name": "odb_chrome_0.8.5",
   "manifest_version": 2,
   "description": "Push Button. Get Data. Make Progress.",
   "icons": { "128": "img/od128.png" },
   "browser_action": {
     "default_title": "OD Button",
     "default_icon": "img/od128.png",
-    "default_popup": "ui/bootstrapper.html"
+    "default_popup": "ui/main.html"
   },
   "permissions": [
     "tabs",
