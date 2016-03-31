@@ -1,5 +1,6 @@
 var current_page = location.pathname;
 var key = localStorage.getItem('api_key');
+var active_tab = undefined;
 
 // These listeners are active on all pages
 window.addEventListener('load', function () {
@@ -25,12 +26,14 @@ function get_loc(callback) {
         navigator.geolocation.getCurrentPosition(function (position) {
             var lat_lon = {geo: {lat: position.coords.latitude, lon: position.coords.longitude}};
             callback(lat_lon)
-        }, function () {
+        }, function (error) {
             // Can't get location (permission denied or timed out)
-            callback(null)
+            console.log(error.message);
+            callback(null);
         }, opts);
     } else {
         // Browser does not support location
+        console.log('GeoLocation is unsupported.');
         callback(null)
     }
 }
@@ -38,13 +41,6 @@ function get_loc(callback) {
 function display_error(warning) {
     var warn_div = get_id('error');
     warn_div.innerHTML = '<div class="alert alert-danger med-text" role="alert">' + warning + '</div>';
-}
-
-function store_article_info(title, doi, author, journal) {
-    localStorage.setItem('title', title);
-    localStorage.setItem('doi', doi);
-    localStorage.setItem('author', author);
-    localStorage.setItem('journal', journal);
 }
 
 function hide_email_fields() {
@@ -68,7 +64,6 @@ function fill_email_fields(author_email, article_title) {
 
 function set_button(button_text, button_target, post_story) {
     //fixme: this could be much more efficient!
-
     var button = $('#submit');
     button.text(button_text);
 
@@ -76,7 +71,9 @@ function set_button(button_text, button_target, post_story) {
         button.click(function() {
             document.getElementById('spin-greybox').style.visibility = 'visible';
             post_block_event(localStorage.getItem('blocked_id'), function () {
-                chrome.tabs.create({url: button_target})
+                chrome.tabs.create({url: button_target});
+                var pp = chrome.extension.getViews({type: 'popup'})[0];
+                pp.close();
             });
         });
     } else if (post_story) { // story only; we need to tell the popup to close once it is sent
@@ -129,13 +126,12 @@ function handle_data(data) {
                 var doi = oab.return_doi(meta);
                 var author = oab.return_authors(meta);
                 var journal = oab.return_journal(meta);
-                store_article_info(title, doi, author, journal);
                 fill_email_fields(undefined, title);                // fixme: we can't reliably scrape emails yet
 
                 var block_request = '/blocked/' + localStorage.getItem('blocked_id');
                 var data = {             // This is best-case (assume getting all info) for now.
                     'api_key': key,
-                    'url': localStorage.getItem('active_tab'),
+                    'url': active_tab,
                     'metadata': {
                         'title': title,
                         'author': author,
@@ -146,12 +142,11 @@ function handle_data(data) {
                 oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
             });
 
-        var tab_id = parseInt(localStorage.getItem('tab_id'), 10);
         // Now inject a script onto the page
-        chrome.tabs.executeScript(tab_id, {
-            code: "chrome.runtime.sendMessage({content: document.head.innerHTML}, function(response) { console.log('success'); });"
-        }, function () {
-            console.log('done');
+        chrome.tabs.query({currentWindow: true, active: true}, function(tabs){
+            chrome.tabs.executeScript(tabs[0].id, {
+                code: "chrome.runtime.sendMessage({content: document.head.innerHTML}, function(response) { console.log('success'); });"
+            });
         });
     }
 }
@@ -173,7 +168,7 @@ function post_block_event(blockid, callback) {
     var block_request = '/blocked/' + blockid;
     var data = {
         api_key: key,
-        url: localStorage.getItem('active_tab'),
+        url: active_tab,
         story: story_text
     };
     // Add author email if provided so oabutton can email them //todo: parse from page & populate field
@@ -196,7 +191,6 @@ function post_block_event(blockid, callback) {
         oab.api_request(block_request, data, 'blockpost', process_api_response, handle_api_error);
         callback()
     }
-
 }
 
 function process_api_response(data, requestor) {
@@ -275,21 +269,22 @@ if (current_page == '/ui/login.html') {
 } else if (current_page == '/ui/main.html' && key) {
     window.addEventListener('load', function () {
         document.getElementById('spin-greybox').style.visibility = 'hidden';
-
-
+        
         document.getElementById('why').addEventListener('click', function () {
             chrome.tabs.create({'url': "https://opendatabutton.org/why"});
         });
 
-        if (!localStorage.getItem('blocked_id')) {
+        chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
             // Blocked Event, if we've not already sent a block event.
             var blocked_request = '/blocked';
+
+            active_tab = tabs[0].url;
             status_data = {
                 'api_key': key,
-                'url': localStorage.getItem('active_tab')
+                'url': active_tab
             },
                 oab.api_request(blocked_request, status_data, 'blocked', process_api_response, handle_api_error);
-        }
+        });
 
         $('#story').keyup(function () {
             var left = 85 - $(this).val().length;
