@@ -5,7 +5,11 @@ var active_tab = undefined;
 // These listeners are active on all pages
 window.addEventListener('load', function () {
     document.getElementById('bug').addEventListener('click', function () {
-        chrome.tabs.create({'url': "http:/openaccessbutton.org/chrome/bug"});
+        if (chrome.runtime.getManifest()['version_name'].indexOf('firefox') >= 0) {
+            chrome.tabs.create({'url': "https://openaccessbutton.org/firefox/bug"});
+        } else {
+            chrome.tabs.create({'url': "https://openaccessbutton.org/chrome/bug"});
+        }
     });
     document.getElementById('logout').addEventListener('click', function () {
         if ('api_key' in localStorage) localStorage.removeItem('api_key');
@@ -40,7 +44,8 @@ function get_loc(callback) {
 
 function display_error(warning) {
     var warn_div = get_id('error');
-    warn_div.innerHTML = '<div class="alert alert-danger med-text" role="alert">' + warning + '</div>';
+    warn_div.innerHTML = '<div class="alert alert-danger med-text" role="alert"></div>';
+    warn_div.firstChild.textContent = warning;
 }
 
 function hide_email_fields() {
@@ -215,15 +220,15 @@ if (current_page == '/ui/login.html') {
         }
 
         document.getElementById('terms').addEventListener('click', function () {
-            chrome.tabs.create({'url': "http:/openaccessbutton.org/terms"});
+            chrome.tabs.create({'url': "https://openaccessbutton.org/terms"});
         });
 
         document.getElementById('privacy').addEventListener('click', function () {
-            chrome.tabs.create({'url': "http:/openaccessbutton.org/privacy"});
+            chrome.tabs.create({'url': "https://openaccessbutton.org/privacy"});
         });
 
         document.getElementById('acc').addEventListener('click', function () {
-            chrome.tabs.create({'url': "https:/opendatabutton.org/account"});
+            chrome.tabs.create({'url': "https://opendatabutton.org/account"});
         });
 
         // Handle the register button.
