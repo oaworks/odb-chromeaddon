@@ -9,7 +9,7 @@ var oab = {
     // Tell the API which plugin version is in use for each POST
     plugin_version_sign: function(pdata) {
         var manifest = chrome.runtime.getManifest();
-        return $.extend(pdata, { plugin: manifest['version_name'] } );
+        return $.extend(pdata, { plugin: manifest['version_name'], type: 'data' } );
     },
 
     api_request: function(request_type, data, requestor, success_callback, failure_callback) {
